@@ -20,11 +20,27 @@ export default {
     // TODO:  push this user object into db.users
     // TODO:  call the writeDb(db) operation to save changes.
     // TODO:  return the user object but without their password  (only id, username, profilePicture)
+    const db = await readDb();
+    const existingUser = db.users.find(u => u.username === username);
+    if (existingUser) {
+      const err = new Error("Username already taken");
+      err.statusCode = 400;
+      throw err;
+    }
+    const user = { 
+      id: crypto.randomUUID(), 
+      username,
+      password,
+      profilePicture: profilePicture || "" 
+    };
+
+    db.users.push(user);
+    await writeDb(db);
 
     return {
-      id: "dummy-id",
-      username: "dummy-username",
-      profilePicture: "",
+      id: user.id,
+      username: user.username,
+      profilePicture: user.profilePicture,
     };
   },
 
@@ -41,13 +57,26 @@ export default {
     //  - token
     //  - user : { id: user.id, username: user.username, profilePicture: user.profilePicture }
 
+    const db = await readDb();
+    const user = db.users.find(u => u.username === username && u.password === password);
+
+    if (!user) {
+      const err = new Error("Invalid username or password");
+      err.statusCode = 401;
+      throw err;
+    }
+    
+    const token = jwt.sign({ userId: user.id, username: user.username}, JWT_SECRET, { expiresIn: "1h"});
+
     return {
       token,
       user: {
-        id: "dummy-id",
-        username: "dummy-username",
-        profilePicture: "dummy-profilePicture",
+        id: user.id,
+        username: user.username,
+        profilePicture: user.profilePicture,
       },
     };
   },
 };
+
+export { JWT_SECRET };

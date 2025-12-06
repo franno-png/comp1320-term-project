@@ -1,3 +1,6 @@
+import jwt from "jsonwebtoken";
+import { JWT_SECRET } from "../services/authService.js";
+
 const DEFAULT_HEADER = {
   "content-type": "application/json",
   "Access-Control-Allow-Origin": "*",
